@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "fixture": {
+    "seed": 20260828,
+    "fixtureHash": "3355d651277048f4cc7b5c309d28057b854f9271105d03fc4e86dc7a0abedca5",
+    "direct": 100,
+    "oneHop": 100,
+    "twoHop": 100,
+    "negative": 100,
+    "decoys": 350
+  },
+  "configurations": [
+    {
+      "name": "lexical",
+      "maxHops": 0,
+      "graphDecay": 0,
+      "recallAt5": 0.3333,
+      "mrr": 0.3333,
+      "directRecallAt5": 1,
+      "oneHopRecallAt5": 0,
+      "twoHopRecallAt5": 0,
+      "negativeAbstention": 1,
+      "decoyContamination": 0,
+      "directLoss": 0
+    },
+    {
+      "name": "one-hop-0.1",
+      "maxHops": 1,
+      "graphDecay": 0.1,
+      "recallAt5": 0.6667,
+      "mrr": 0.5,
+      "directRecallAt5": 1,
+      "oneHopRecallAt5": 1,
+      "twoHopRecallAt5": 0,
+      "negativeAbstention": 1,
+      "decoyContamination": 0,
+      "directLoss": 0
+    },
+    {
+      "name": "one-hop-0.3",
+      "maxHops": 1,
+      "graphDecay": 0.3,
+      "recallAt5": 0.6667,
+      "mrr": 0.5,
+      "directRecallAt5": 1,
+      "oneHopRecallAt5": 1,
+      "twoHopRecallAt5": 0,
+      "negativeAbstention": 1,
+      "decoyContamination": 0,
+      "directLoss": 0
+    },
+    {
+      "name": "one-hop-0.5",
+      "maxHops": 1,
+      "graphDecay": 0.5,
+      "recallAt5": 0.6667,
+      "mrr": 0.5,
+      "directRecallAt5": 1,
+      "oneHopRecallAt5": 1,
+      "twoHopRecallAt5": 0,
+      "negativeAbstention": 1,
+      "decoyContamination": 0,
+      "directLoss": 0
+    },
+    {
+      "name": "two-hop-0.3",
+      "maxHops": 2,
+      "graphDecay": 0.3,
+      "recallAt5": 1,
+      "mrr": 0.6111,
+      "directRecallAt5": 1,
+      "oneHopRecallAt5": 1,
+      "twoHopRecallAt5": 1,
+      "negativeAbstention": 1,
+      "decoyContamination": 0,
+      "directLoss": 0
+    }
+  ],
+  "winner": "two-hop-0.3",
+  "qualification": "This is the strongest memory configuration tested on this fixture family. It is not a universal optimum."
+}

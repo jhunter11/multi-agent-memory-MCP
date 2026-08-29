@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<evaluation>
+  <qa_pair><question>Which procedure is linked from the release checklist owner?</question><answer>Rollback procedure</answer></qa_pair>
+  <qa_pair><question>What graph depth is the tested default?</question><answer>2</answer></qa_pair>
+  <qa_pair><question>What graph decay is the tested default?</question><answer>0.3</answer></qa_pair>
+  <qa_pair><question>Where does the Windows database default live?</question><answer>LOCALAPPDATA</answer></qa_pair>
+  <qa_pair><question>Where does the macOS database default live?</question><answer>Application Support</answer></qa_pair>
+  <qa_pair><question>Which Linux variable overrides the default data root?</question><answer>XDG_DATA_HOME</answer></qa_pair>
+  <qa_pair><question>Which artifact should move between machines?</question><answer>JSONL snapshot</answer></qa_pair>
+  <qa_pair><question>Are scopes access-control boundaries?</question><answer>No</answer></qa_pair>
+  <qa_pair><question>Which transport does the server use?</question><answer>stdio</answer></qa_pair>
+  <qa_pair><question>Which database engine stores memory?</question><answer>SQLite</answer></qa_pair>
+</evaluation>

@@ -1,0 +1,12 @@
+{
+  "seed": 20260828,
+  "description": "Generated multi-agent research, engineering, operations, and coordination memory.",
+  "queries": {
+    "direct": 100,
+    "oneHop": 100,
+    "twoHop": 100,
+    "negative": 100
+  },
+  "decoys": 350,
+  "privateRecords": 0
+}

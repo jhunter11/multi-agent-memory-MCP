@@ -1,0 +1,7 @@
+node_modules
+dist
+coverage
+.audit-tmp
+package-lock.json
+schemas/*.schema.json
+benchmark/results.json

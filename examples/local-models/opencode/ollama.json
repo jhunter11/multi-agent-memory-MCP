@@ -1,0 +1,21 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "ollama/llama3.2",
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama (local)",
+      "options": { "baseURL": "http://127.0.0.1:11434/v1" },
+      "models": { "llama3.2": { "name": "Llama 3.2" } }
+    }
+  },
+  "mcp": {
+    "multi-agent-memory": {
+      "type": "local",
+      "command": ["__NODE_EXECUTABLE__", "__SERVER_ENTRYPOINT__"],
+      "environment": { "MULTI_AGENT_MEMORY_DB": "__MEMORY_DB__" },
+      "enabled": true,
+      "timeout": 10000
+    }
+  }
+}

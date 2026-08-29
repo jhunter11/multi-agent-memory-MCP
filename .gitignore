@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+.audit-tmp/
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+*.jsonl
+memory-export/
+snapshots/
+.DS_Store
+Thumbs.db
+*.bak
+*.backup
+generated-client-config/

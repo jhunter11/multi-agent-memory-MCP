@@ -1,0 +1,73 @@
+{
+  "name": "multi-agent-memory-mcp",
+  "version": "0.1.0",
+  "description": "Local-first bounded multi-hop memory for MCP coding agents and local LLM hosts.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "multi-agent",
+    "agent-memory",
+    "graph-rag",
+    "local-llm",
+    "claude-code",
+    "codex",
+    "opencode",
+    "ollama",
+    "llama",
+    "sqlite"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "multi-agent-memory": "./dist/mcp/bin.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./contracts": {
+      "types": "./dist/contracts.d.ts",
+      "import": "./dist/contracts.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "start": "node dist/mcp/bin.js",
+    "probe": "node scripts/mcp-probe.mjs",
+    "demo": "node dist/cli/demo.js",
+    "benchmark": "node dist/cli/benchmark.js",
+    "verify": "node scripts/release-gate.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.0.0",
+    "better-sqlite3": "13.0.3",
+    "smol-toml": "1.8.0",
+    "zod": "4.5.2"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
+    "@openai/codex": "0.150.1",
+    "@types/better-sqlite3": "9.6.0",
+    "@types/node": "26.4.0",
+    "opencode-ai": "1.18.25",
+    "prettier": "3.9.6",
+    "tsx": "4.23.12",
+    "typescript": "7.0.2"
+  }
+}

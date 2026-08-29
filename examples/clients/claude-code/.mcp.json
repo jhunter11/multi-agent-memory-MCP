@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "multi-agent-memory": {
+      "type": "stdio",
+      "command": "__NODE_EXECUTABLE__",
+      "args": ["__SERVER_ENTRYPOINT__"],
+      "env": {
+        "MULTI_AGENT_MEMORY_DB": "__MEMORY_DB__"
+      }
+    }
+  }
+}
