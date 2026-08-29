@@ -5,7 +5,7 @@ This project uses open-source packages under permissive licenses.
 | Package                        | Version | License | Use                               |
 | ------------------------------ | ------- | ------- | --------------------------------- |
 | `@modelcontextprotocol/server` | 2.0.0   | MIT     | MCP server and stdio transport    |
-| `better-sqlite3`               | 13.0.3  | MIT     | SQLite storage                    |
+| `better-sqlite3`               | 12.11.1 | MIT     | SQLite storage                    |
 | `smol-toml`                    | 1.8.0   | MIT     | Codex configuration serialization |
 | `zod`                          | 4.5.2   | MIT     | Runtime schemas                   |
 

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { basename, dirname, isAbsolute, join } from 'node:path';
+import { posix, win32 } from 'node:path';
 import test from 'node:test';
 
 import {
@@ -25,21 +25,18 @@ const WINDOWS_ENV = {
 };
 
 /**
- * Expectations are assembled with `join` rather than written out.
- *
- * The `platform` argument selects which folder convention applies, but the
- * separator is always the host's, because `node:path` is the host's. Writing a
- * literal would only pass on one operating system, and this suite has to run on
- * whichever machine the developer is at.
+ * Expectations use the target platform's path functions, even when the test is
+ * running on another operating system.
  */
-function expected(...segments: string[]): string {
-  return join(...segments, 'multi-agent-memory-mcp', 'memory.sqlite');
+function expected(platform: 'win32' | 'posix', ...segments: string[]): string {
+  const path = platform === 'win32' ? win32 : posix;
+  return path.join(...segments, 'multi-agent-memory-mcp', 'memory.sqlite');
 }
 
 test('the Windows default is the local profile, never the roaming one', () => {
   const path = defaultDatabasePath(WINDOWS_ENV, 'win32');
 
-  assert.equal(path, expected('C:\\Users\\alex\\AppData\\Local'));
+  assert.equal(path, expected('win32', 'C:\\Users\\alex\\AppData\\Local'));
   // Roaming is copied between machines by the domain, and a copied live SQLite
   // file is the corruption this project tells its users to avoid.
   assert.ok(!path.includes('Roaming'), 'the roaming profile is a synced folder');
@@ -47,27 +44,27 @@ test('the Windows default is the local profile, never the roaming one', () => {
 
 test('a Windows box with no LOCALAPPDATA falls back under the user profile', () => {
   const path = defaultDatabasePath({ USERPROFILE: 'C:\\Users\\alex' }, 'win32');
-  assert.equal(path, expected('C:\\Users\\alex', 'AppData', 'Local'));
+  assert.equal(path, expected('win32', 'C:\\Users\\alex', 'AppData', 'Local'));
 });
 
 test('the macOS default is Application Support', () => {
   const path = defaultDatabasePath({ HOME: '/Users/alex' }, 'darwin');
-  assert.equal(path, expected('/Users/alex', 'Library', 'Application Support'));
+  assert.equal(path, expected('posix', '/Users/alex', 'Library', 'Application Support'));
 });
 
 test('the Linux default honours XDG_DATA_HOME and falls back to .local/share', () => {
   assert.equal(
     defaultDatabasePath({ HOME: '/home/alex', XDG_DATA_HOME: '/home/alex/.data' }, 'linux'),
-    expected('/home/alex/.data')
+    expected('posix', '/home/alex/.data')
   );
   assert.equal(
     defaultDatabasePath({ HOME: '/home/alex' }, 'linux'),
-    expected('/home/alex', '.local', 'share')
+    expected('posix', '/home/alex', '.local', 'share')
   );
   // An empty variable is not a setting.
   assert.equal(
     defaultDatabasePath({ HOME: '/home/alex', XDG_DATA_HOME: '   ' }, 'linux'),
-    expected('/home/alex', '.local', 'share')
+    expected('posix', '/home/alex', '.local', 'share')
   );
 });
 
@@ -108,18 +105,30 @@ test('the default snapshot lives outside the source checkout', () => {
   const env = { HOME: '/home/alex', XDG_DATA_HOME: '/home/alex/.data' };
   const path = defaultSnapshotPath(env, 'linux');
 
-  assert.ok(isAbsolute(path), path);
-  assert.equal(basename(path), 'memory.jsonl');
-  assert.equal(dirname(path), defaultExportDirectory(env, 'linux'));
-  assert.equal(basename(dirname(path)), 'exports');
+  assert.ok(posix.isAbsolute(path), path);
+  assert.equal(posix.basename(path), 'memory.jsonl');
+  assert.equal(posix.dirname(path), defaultExportDirectory(env, 'linux'));
+  assert.equal(posix.basename(posix.dirname(path)), 'exports');
 });
 
 test('MCP exports stay inside the configured export directory', () => {
-  const root = join('C:\\Data', 'memory exports');
-  assert.equal(resolveMcpExportTarget('snapshot.jsonl', root), join(root, 'snapshot.jsonl'));
-  assert.throws(() => resolveMcpExportTarget('..\\private.jsonl', root), /one JSONL file name/u);
-  assert.throws(() => resolveMcpExportTarget('../private.jsonl', root), /one JSONL file name/u);
-  assert.throws(() => resolveMcpExportTarget('snapshot.txt', root), /one JSONL file name/u);
+  const root = win32.join('C:\\Data', 'memory exports');
+  assert.equal(
+    resolveMcpExportTarget('snapshot.jsonl', root, 'win32'),
+    win32.join(root, 'snapshot.jsonl')
+  );
+  assert.throws(
+    () => resolveMcpExportTarget('..\\private.jsonl', root, 'win32'),
+    /one JSONL file name/u
+  );
+  assert.throws(
+    () => resolveMcpExportTarget('../private.jsonl', root, 'win32'),
+    /one JSONL file name/u
+  );
+  assert.throws(
+    () => resolveMcpExportTarget('snapshot.txt', root, 'win32'),
+    /one JSONL file name/u
+  );
 });
 
 test('the resolved path is always absolute', () => {

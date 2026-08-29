@@ -56,7 +56,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/server": "2.0.0",
-    "better-sqlite3": "13.0.3",
+    "better-sqlite3": "12.11.1",
     "smol-toml": "1.8.0",
     "zod": "4.5.2"
   },

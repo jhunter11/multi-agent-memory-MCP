@@ -9,7 +9,7 @@
  */
 
 import { homedir } from 'node:os';
-import { basename, isAbsolute, join, resolve as resolvePath } from 'node:path';
+import { posix, win32 } from 'node:path';
 import { DATABASE_ENV_VAR, EXPORT_DIR_ENV_VAR } from './public-identity.js';
 
 export const DATABASE_FILE_NAME = 'memory.sqlite';
@@ -22,6 +22,10 @@ export { DATABASE_ENV_VAR, EXPORT_DIR_ENV_VAR };
 
 export type EnvLike = Record<string, string | undefined>;
 
+function pathFor(platform: NodeJS.Platform): typeof win32 {
+  return platform === 'win32' ? win32 : posix;
+}
+
 /**
  * The safe default is in the operating-system data directory, outside a source
  * checkout. Snapshots contain plaintext memory and should not enter Git by
@@ -31,7 +35,7 @@ export function defaultSnapshotPath(
   env: EnvLike = process.env,
   platform: NodeJS.Platform = process.platform
 ): string {
-  return join(defaultExportDirectory(env, platform), SNAPSHOT_FILE_NAME);
+  return pathFor(platform).join(defaultExportDirectory(env, platform), SNAPSHOT_FILE_NAME);
 }
 
 function firstNonEmpty(...values: (string | undefined)[]): string | null {
@@ -58,29 +62,36 @@ export function defaultDatabasePath(
   platform: NodeJS.Platform = process.platform
 ): string {
   const home = homeDirectory(env);
+  const path = pathFor(platform);
   if (platform === 'win32') {
-    const base = firstNonEmpty(env['LOCALAPPDATA']) ?? join(home, 'AppData', 'Local');
-    return join(base, DATABASE_DIR_NAME, DATABASE_FILE_NAME);
+    const base = firstNonEmpty(env['LOCALAPPDATA']) ?? path.join(home, 'AppData', 'Local');
+    return path.join(base, DATABASE_DIR_NAME, DATABASE_FILE_NAME);
   }
   if (platform === 'darwin') {
-    return join(home, 'Library', 'Application Support', DATABASE_DIR_NAME, DATABASE_FILE_NAME);
+    return path.join(home, 'Library', 'Application Support', DATABASE_DIR_NAME, DATABASE_FILE_NAME);
   }
-  const base = firstNonEmpty(env['XDG_DATA_HOME']) ?? join(home, '.local', 'share');
-  return join(base, DATABASE_DIR_NAME, DATABASE_FILE_NAME);
+  const base = firstNonEmpty(env['XDG_DATA_HOME']) ?? path.join(home, '.local', 'share');
+  return path.join(base, DATABASE_DIR_NAME, DATABASE_FILE_NAME);
 }
 
 export function defaultExportDirectory(
   env: EnvLike = process.env,
   platform: NodeJS.Platform = process.platform
 ): string {
+  const path = pathFor(platform);
   const configured = firstNonEmpty(env[EXPORT_DIR_ENV_VAR]);
-  if (configured !== null) return resolvePath(configured);
-  return join(defaultDatabasePath(env, platform), '..', SNAPSHOT_DIR_NAME);
+  if (configured !== null) return path.resolve(configured);
+  return path.join(defaultDatabasePath(env, platform), '..', SNAPSHOT_DIR_NAME);
 }
 
-export function resolveMcpExportTarget(fileName: string, exportDirectory: string): string {
+export function resolveMcpExportTarget(
+  fileName: string,
+  exportDirectory: string,
+  platform: NodeJS.Platform = process.platform
+): string {
+  const path = pathFor(platform);
   const clean = fileName.trim();
-  const safeName = basename(clean);
+  const safeName = path.basename(clean);
   if (
     clean.length === 0 ||
     clean.includes('/') ||
@@ -90,7 +101,7 @@ export function resolveMcpExportTarget(fileName: string, exportDirectory: string
   ) {
     throw new Error('fileName must be one JSONL file name without directory segments');
   }
-  return resolvePath(exportDirectory, safeName);
+  return path.resolve(exportDirectory, safeName);
 }
 
 /** Reads `--db <path>` or `--db=<path>` out of the argument list. */
@@ -128,14 +139,15 @@ export function resolveDatabasePath(
   env: EnvLike = process.env,
   platform: NodeJS.Platform = process.platform
 ): string {
+  const path = pathFor(platform);
   const fromArgs = readDatabaseArgument(argv);
   if (fromArgs !== null && fromArgs.trim().length > 0) {
-    return resolvePath(fromArgs.trim());
+    return path.resolve(fromArgs.trim());
   }
   const fromEnv = firstNonEmpty(env[DATABASE_ENV_VAR]);
   if (fromEnv !== null) {
-    return resolvePath(fromEnv);
+    return path.resolve(fromEnv);
   }
   const fallback = defaultDatabasePath(env, platform);
-  return isAbsolute(fallback) ? fallback : resolvePath(fallback);
+  return path.isAbsolute(fallback) ? fallback : path.resolve(fallback);
 }
