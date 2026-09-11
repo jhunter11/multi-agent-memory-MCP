@@ -34,7 +34,7 @@ CLI registration:
 codex mcp add multi-agent-memory --env MULTI_AGENT_MEMORY_DB=<absolute-db> -- <absolute-node> <absolute-server>
 ```
 
-The example sets a 20-second startup timeout and a 60-second tool timeout.
+The example sets a 20-second startup timeout and a 120-second tool timeout.
 
 ## OpenCode
 

@@ -24,7 +24,7 @@ const MAX_TIME_MS = 2 ** 48 - 1;
 
 export const ENTRY_ID_PREFIX = 'mem_';
 export const FEEDBACK_ID_PREFIX = 'fbk_';
-export const ENTRY_ID_PATTERN = /^mem_[0-9a-hjkmnp-tv-z]{26}$/u;
+export const ENTRY_ID_PATTERN = /^(?:mem_[0-9a-hjkmnp-tv-z]{26}|queue_[0-9a-f]{32})$/u;
 export const ULID_PATTERN = /^[0-9a-hjkmnp-tv-z]{26}$/u;
 
 let lastTimeMs = -1;

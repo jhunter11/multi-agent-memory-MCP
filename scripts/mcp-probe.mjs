@@ -73,6 +73,11 @@ async function probe(mode) {
       arguments: { task: 'bounded graph recall', entryScope: 'probe/engineering' }
     });
     assert.notEqual(recalled.isError, true);
+    const packet = JSON.parse(recalled.content[0].text);
+    assert.equal(packet.schema, 'agent-evidence/v2');
+    assert.equal(packet.actionsAuthorized, false);
+    assert.equal(packet.usedBytes, Buffer.byteLength(recalled.content[0].text, 'utf8'));
+    assert.ok(packet.hits.length > 0);
 
     const stats = await client.callTool({ name: 'memory_stats', arguments: {} });
     assert.notEqual(stats.isError, true);

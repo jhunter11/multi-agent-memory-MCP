@@ -7,6 +7,8 @@ const commands = [
   ['npm', ['run', 'build']],
   ['npm', ['run', 'probe']],
   ['node', ['scripts/check-benchmark.mjs']],
+  ['node', ['scripts/benchmark-meta.mjs']],
+  ['node', ['scripts/check-prepare-meta.mjs']],
   ['npm', ['run', 'demo']],
   ['node', ['scripts/check-package.mjs']],
   ['node', ['scripts/check-licenses.mjs']],

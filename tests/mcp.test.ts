@@ -218,8 +218,9 @@ test('recall reports the budget it used and never exceeds it', async () => {
   const used = body['usedBytes'] as number;
 
   assert.ok(used > 0 && used <= budget, `usedBytes ${used} must sit inside the budget ${budget}`);
-  assert.ok((body['count'] as number) > 0);
-  assert.match(prose(result), new RegExp(`using ${used} of ${budget} bytes`, 'u'));
+  assert.ok((body['hits'] as unknown[]).length > 0);
+  assert.equal(Buffer.byteLength(prose(result), 'utf8'), used);
+  assert.deepEqual(JSON.parse(prose(result)), body);
 
   harness.close();
 });
@@ -231,8 +232,8 @@ test('recall on an empty store says so rather than failing', async () => {
     entryScope: 'agency'
   });
 
-  assert.equal(payload(result)['count'], 0);
-  assert.match(prose(result), /Nothing recalled/u);
+  assert.deepEqual(payload(result)['hits'], []);
+  assert.equal(payload(result)['missingSupport'], 'unknown');
 
   harness.close();
 });
@@ -421,7 +422,7 @@ test('reflect gathers material first, then records the synthesis it is handed', 
   assert.match(prose(gathered), /No insight written yet/u);
   assert.match(
     prose(gathered),
-    /has no model access/u,
+    /does not generate answers/u,
     'the server says plainly that it does not think'
   );
 

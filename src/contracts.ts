@@ -40,7 +40,9 @@ export const ScopeSchema = z
   });
 export type Scope = z.infer<typeof ScopeSchema>;
 
-export const EntryIdSchema = z.string().regex(/^mem_[0-9a-hjkmnp-tv-z]{26}$/u);
+export const EntryIdSchema = z
+  .string()
+  .regex(/^(?:mem_[0-9a-hjkmnp-tv-z]{26}|queue_[0-9a-f]{32})$/u);
 export const EdgeKindSchema = z.enum(['contains', 'refers_to', 'supersedes', 'contradicts']);
 export type EdgeKind = z.infer<typeof EdgeKindSchema>;
 
@@ -130,6 +132,10 @@ export const ListScopeInputSchema = z.object({
 export type ListScopeInput = z.input<typeof ListScopeInputSchema>;
 
 export const RecallInputSchema = z.object({
+  strategy: z
+    .enum(['auto', 'meta', 'fusion', 'concept', 'lexical', 'information', 'legacy'])
+    .default('auto'),
+  includeSuperseded: z.boolean().default(false),
   /** What the agent is about to do. Used as the query. */
   task: z.string().trim().min(1).max(2_000),
   /** Where this agent starts reading. Nested scopes rank above distant ones. */
@@ -210,6 +216,7 @@ export type ImportResult = z.infer<typeof ImportResultSchema>;
 
 /** Implemented by `src/store`. The MCP layer talks only to this. */
 export interface MemoryStore {
+  recallMeta?(input: RecallInput): Promise<import('./store/meta.js').MetaPacket>;
   write(input: WriteEntryInput): Entry;
   get(id: string): Entry | null;
   /** A scope's entries, most trusted first, with no text query involved. */

@@ -22,6 +22,8 @@ import type {
   SearchHit
 } from '../contracts.js';
 import { newEntryId, newFeedbackId } from './id.js';
+import { MetaIndex, digest, terms, type MetaPacket, type VectorInput } from './meta.js';
+import { LocalVectors, readMetaSettings } from './vectors.js';
 import {
   applySchema,
   FTS_WEIGHT_BODY,
@@ -416,6 +418,9 @@ function isNewer(incoming: string, stored: string): boolean {
 // --- The store --------------------------------------------------------------
 
 export class SqliteMemoryStore implements MemoryStore {
+  private readonly vectors: LocalVectors;
+  private readonly dbPath: string;
+  private metaIndex?: { signature: string; index: MetaIndex };
   private readonly db: Db;
   private readonly writeTx: (input: unknown) => Entry;
   private readonly feedbackTx: (
@@ -425,6 +430,8 @@ export class SqliteMemoryStore implements MemoryStore {
   ) => Entry;
 
   constructor(options: SqliteMemoryStoreOptions) {
+    this.dbPath = options.dbPath;
+    this.vectors = new LocalVectors(options.dbPath);
     const db = new DatabaseConstructor(options.dbPath);
     try {
       // WAL lets a reader and a writer work at once. An in-memory database reports
@@ -448,6 +455,56 @@ export class SqliteMemoryStore implements MemoryStore {
   /** The schema version stamped on the open file. */
   get schemaVersion(): number {
     return readSchemaVersion(this.db);
+  }
+
+  /** A coherent SQLite snapshot, followed by local inference and evidence packing. */
+  async recallMeta(input: RecallArgs): Promise<MetaPacket> {
+    const q = RecallInputSchema.parse(input);
+    const settings = await readMetaSettings(this.dbPath);
+    if (q.strategy === 'auto') q.strategy = settings.strategy ?? 'meta';
+    const snapshot = this.db.transaction(() => ({
+      entries: this.allEntries(),
+      edges: this.allEdges(),
+      lexical: this.metaLexical(q.task, q.includeSuperseded)
+    }))();
+    let vector: VectorInput;
+    try {
+      vector = await this.vectors.recall(snapshot.entries, q.task);
+    } catch (error) {
+      process.stderr.write(
+        `Local vectors unavailable: ${error instanceof Error ? error.message : String(error)}\n`
+      );
+      vector = {
+        records: new Map(),
+        query: [],
+        status: 'unavailable: lexical-concept fallback; inspect server stderr'
+      };
+    }
+    const signature = digest(JSON.stringify([snapshot.entries, snapshot.edges, vector.status]));
+    if (this.metaIndex?.signature !== signature)
+      this.metaIndex = {
+        signature,
+        index: new MetaIndex(snapshot.entries, snapshot.edges, vector.records)
+      };
+    const index = this.metaIndex.index;
+    return index.pack(
+      q,
+      index.rank(q, snapshot.lexical, vector.query.length ? vector : undefined),
+      vector.status
+    );
+  }
+
+  metaLexical(task: string, includeSuperseded = false): Map<string, number> {
+    const words = terms(task).slice(0, 24);
+    if (!words.length) return new Map();
+    const query = words.map((w) => `"${w.replaceAll('"', '""')}"`).join(' OR ');
+    const rows = this.db
+      .prepare(
+        `SELECT e.id, bm25(entries_fts, 0, 5, 1) AS bm FROM entries_fts JOIN entries e ON e.id = entries_fts.id WHERE entries_fts MATCH ? ${includeSuperseded ? '' : 'AND e.superseded_by IS NULL'} ORDER BY bm, e.id LIMIT 4000`
+      )
+      .all(query) as { id: string; bm: number }[];
+    const best = Math.max(0, ...rows.map((r) => -r.bm)) || 1;
+    return new Map(rows.map((r) => [r.id, Math.max(0, -r.bm) / best]));
   }
 
   // --- Writing --------------------------------------------------------------
