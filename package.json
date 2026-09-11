@@ -1,6 +1,6 @@
 {
   "name": "multi-agent-memory-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Local-first bounded multi-hop memory for MCP coding agents and local LLM hosts.",
   "keywords": [
     "mcp",
@@ -52,7 +52,9 @@
     "probe": "node scripts/mcp-probe.mjs",
     "demo": "node dist/cli/demo.js",
     "benchmark": "node dist/cli/benchmark.js",
-    "verify": "node scripts/release-gate.mjs"
+    "verify": "node scripts/release-gate.mjs",
+    "benchmark:meta": "node scripts/benchmark-meta.mjs",
+    "prepare:meta": "node scripts/prepare-meta.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/server": "2.0.0",
@@ -69,5 +71,12 @@
     "prettier": "3.9.6",
     "tsx": "4.23.12",
     "typescript": "7.0.2"
+  },
+  "optionalDependencies": {
+    "@xenova/transformers": "2.17.2"
+  },
+  "overrides": {
+    "protobufjs": "7.6.6",
+    "sharp": "0.35.4"
   }
 }

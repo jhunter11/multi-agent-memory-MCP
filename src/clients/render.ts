@@ -53,7 +53,7 @@ export function renderClientConfig(
       args: [input.serverEntrypoint],
       enabled: true,
       startup_timeout_sec: 20,
-      tool_timeout_sec: 60,
+      tool_timeout_sec: 120,
       env: { MULTI_AGENT_MEMORY_DB: input.databasePath }
     };
     return {
@@ -68,7 +68,7 @@ export function renderClientConfig(
     command: [input.nodeExecutable, input.serverEntrypoint],
     environment: { MULTI_AGENT_MEMORY_DB: input.databasePath },
     enabled: true,
-    timeout: 10_000
+    timeout: 120_000
   };
   return {
     client,

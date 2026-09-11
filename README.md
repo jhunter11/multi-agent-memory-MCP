@@ -6,7 +6,9 @@
 
 Local-first, model-agnostic memory for coding agents and local LLM systems.
 
-This repository provides persistent memory, Graph RAG, and bounded multi-hop retrieval through MCP. It uses SQLite FTS5 and a typed knowledge graph. It has no hosted service, telemetry, account, or model dependency.
+This repository provides persistent memory and bounded graph retrieval through MCP. Version 0.2.0 combines trust-weighted FTS5, scope concepts, hashed features, optional local vectors, and graph paths. It has no hosted service, telemetry, or account.
+
+Existing users: follow [the 0.2 upgrade guide](docs/upgrade-v0.2.md). The database format stays at version 1. Local vectors require an explicit setup step.
 
 Use the same memory store with Claude Code, Codex, OpenCode, or a custom MCP client. OpenCode examples connect Llama-family and other local models through Ollama, LM Studio, vLLM, and OpenAI-compatible APIs.
 
@@ -14,7 +16,7 @@ The setup and test matrix supports Windows, macOS, and Linux.
 
 ## Measured result
 
-The committed benchmark uses 400 synthetic questions and 350 decoy records. It includes direct, one-hop, two-hop, and negative cases.
+The original benchmark uses 400 synthetic questions and 350 decoy records. The following table reports the legacy retrieval API. It includes direct, one-hop, two-hop, and negative cases.
 
 | Configuration       |   Recall@5 |        MRR |     Direct |    One hop |   Two hops | Negative abstention | Decoy contamination |
 | ------------------- | ---------: | ---------: | ---------: | ---------: | ---------: | ------------------: | ------------------: |
@@ -32,6 +34,7 @@ Run the public benchmark:
 npm run build
 npm run benchmark
 node scripts/check-benchmark.mjs
+npm run benchmark:meta
 ```
 
 See [benchmark/results.json](benchmark/results.json) and [docs/benchmark.md](docs/benchmark.md).
@@ -102,7 +105,7 @@ See [docs/clients.md](docs/clients.md) for exact CLI commands and paths.
 
 ## Use Ollama, Llama, LM Studio, or vLLM
 
-The MCP server does not call a model. Your coding agent or MCP host calls the model and the memory tools.
+Your coding agent or MCP host calls the answer model and the memory tools. Memory can use an optional local embedding model. It never sends memories to a hosted model.
 
 Full OpenCode examples:
 
@@ -117,18 +120,21 @@ See [docs/local-models.md](docs/local-models.md).
 
 ## How retrieval works
 
-The tested default combines lexical retrieval and a bounded graph walk:
+The default MCP strategy is `meta`:
 
 ```text
 query
-  -> SQLite FTS5 lexical seeds
-  -> trust and scope ranking
+  -> FTS5 + optional local MiniLM vectors
+  -> trust-weighted fusion + scope concepts + hashed token features
+  -> exact identifier routing when lexical evidence is narrow
   -> typed graph expansion, maximum two hops
-  -> 0.3 score decay per hop
-  -> deduplication and byte budget
+  -> weakest-path trust, ordinary decay 0.3, conflict decay 0.9
+  -> whole source records in a bounded JSON evidence packet
 ```
 
-Direct hits remain available. Linked records can add context when they do not repeat the query terms. Cycles terminate, and the engine keeps one best path per record.
+Linked records can add context when they do not repeat the query terms. Cycles terminate, and the engine keeps one best path per record. Scores and trust ratings are not truth probabilities.
+
+The packet includes source dates, body hashes, paths, and conflict links. It marks missing support as unknown and grants no permission to act. See [retrieval and handoff details](docs/meta-memory.md).
 
 Scopes are organization and ranking labels. They are not access-control boundaries. Use this release in a trusted, single-user local environment.
 
@@ -146,7 +152,7 @@ Scopes are organization and ranking labels. They are not access-control boundari
 | `memory_export`    | Write a confined JSONL snapshot.                   |
 | `memory_stats`     | Show record, edge, feedback, and scope counts.     |
 
-Every tool returns short text and structured content. The stdio server supports the MCP 2026-07-28 and 2025-11-25 protocol eras.
+Meta recall returns the same JSON packet as text and structured content. Other tools return short text and structured content. The server supports both MCP protocol eras already tested by this project.
 
 ## TypeScript API
 
@@ -164,7 +170,7 @@ const entry = store.write({
   source: 'architecture review'
 });
 
-const result = store.recall({
+const result = await store.recallMeta({
   task: 'prepare the next architecture review',
   entryScope: 'team/engineering',
   maxHops: 2,

@@ -8,7 +8,7 @@
         "MULTI_AGENT_MEMORY_DB": "__MEMORY_DB__"
       },
       "enabled": true,
-      "timeout": 10000
+      "timeout": 120000
     }
   }
 }
