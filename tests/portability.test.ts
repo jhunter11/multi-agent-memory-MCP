@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm, stat } from 'node:fs/promises';
 import { registerHooks } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -537,4 +537,43 @@ test('exportToFile and importFromFile round-trip through the filesystem', async 
 
 test('an origin the header schema refuses fails the export instead of writing it', () => {
   assert.throws(() => exportToJsonl(new FakeStore(), { origin: '   ' }), /origin|String/u);
+});
+
+test('concurrent exports publish complete snapshots without shared temporary files', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'memory-concurrent-export-'));
+  const target = join(directory, 'memory.jsonl');
+  const source = populated();
+  try {
+    const summaries = await Promise.allSettled(
+      Array.from({ length: 16 }, () => exportToFile(source, target, { origin: 'desktop' }))
+    );
+
+    for (const summary of summaries) {
+      if (summary.status === 'rejected') assert.fail(String(summary.reason));
+    }
+    assert.equal(await readFile(target, 'utf8'), exportToJsonl(source, { origin: 'desktop' }));
+    assert.deepEqual(await readdir(directory), ['memory.jsonl']);
+    if (process.platform !== 'win32') assert.equal((await stat(target)).mode & 0o777, 0o600);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('a failed export releases the destination for the next caller', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'memory-failed-export-'));
+  const target = join(directory, 'memory.jsonl');
+  const source = populated();
+  try {
+    const results = await Promise.allSettled([
+      exportToFile(source, target, { origin: '   ' }),
+      exportToFile(source, target, { origin: 'desktop' })
+    ]);
+
+    assert.equal(results[0]?.status, 'rejected');
+    assert.equal(results[1]?.status, 'fulfilled');
+    assert.equal(await readFile(target, 'utf8'), exportToJsonl(source, { origin: 'desktop' }));
+    assert.deepEqual(await readdir(directory), ['memory.jsonl']);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });

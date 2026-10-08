@@ -18,6 +18,25 @@ Use Node.js 22 or newer. Run `npm ci` on the current operating system.
 
 Do not copy `node_modules` from another operating system or CPU architecture.
 
+## OpenCode installation fails on Windows
+
+If `npm ci` fails in the `opencode-ai` postinstall step, its development CLI might not start on your host.
+The October 8, 2026 Windows check reproduced an `EPERM` root-directory error in that CLI with Node 25.5.0.
+
+Use this path to verify the memory package. Check each command's exit code before the next command.
+
+```powershell
+npm ci --ignore-scripts
+npm rebuild better-sqlite3
+npm run verify
+powershell -ExecutionPolicy Bypass -File scripts/setup.ps1 -Client none -SkipInstall
+```
+
+This path skips dependency install scripts, then rebuilds SQLite explicitly.
+It still runs the client configuration tests and both MCP protocol checks.
+Use a separately installed, working MCP host for agent connections.
+Host CLI execution and real-model embedding remain unverified by this workaround.
+
 ## Recall returns no linked record
 
 Check the edge with `memory_neighbors`. Make sure `maxHops` is at least the required path length.

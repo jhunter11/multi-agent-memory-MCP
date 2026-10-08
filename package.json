@@ -59,11 +59,11 @@
   "dependencies": {
     "@modelcontextprotocol/server": "2.0.0",
     "better-sqlite3": "12.11.1",
-    "smol-toml": "1.8.0",
+    "smol-toml": "1.9.0",
     "zod": "4.5.2"
   },
   "devDependencies": {
-    "@modelcontextprotocol/client": "2.0.0",
+    "@modelcontextprotocol/client": "2.3.1",
     "@openai/codex": "0.150.1",
     "@types/better-sqlite3": "9.6.0",
     "@types/node": "26.4.0",
@@ -77,6 +77,6 @@
   },
   "overrides": {
     "protobufjs": "7.6.6",
-    "sharp": "0.35.4"
+    "sharp": "0.35.5"
   }
 }

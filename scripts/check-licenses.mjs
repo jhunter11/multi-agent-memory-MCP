@@ -38,13 +38,13 @@ for (const [path, metadata] of Object.entries(lock.packages ?? {})) {
   if (
     path.startsWith('node_modules/@img/sharp-libvips-') &&
     reviewedLibvipsPlatforms.has(path.slice('node_modules/@img/sharp-libvips-'.length)) &&
-    metadata.version === '1.3.3' &&
+    metadata.version === '1.3.4' &&
     metadata.license === 'LGPL-3.0-or-later'
   )
     continue;
   if (
     path.startsWith('node_modules/@img/sharp-') &&
-    metadata.version === '0.35.4' &&
+    metadata.version === '0.35.5' &&
     reviewedSharpBinaries.get(path.slice('node_modules/@img/sharp-'.length)) === metadata.license
   )
     continue;

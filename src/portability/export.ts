@@ -1,6 +1,7 @@
 import { createWriteStream } from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import { mkdir, rename, rm } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 
@@ -46,6 +47,7 @@ export interface ExportSummary {
 
 /** Timestamp used for a store that holds nothing to date-stamp. */
 const EPOCH = new Date(0).toISOString();
+const pendingExports = new Map<string, Promise<void>>();
 
 export function exportToJsonl(store: MemoryStore, options: ExportOptions): string {
   let out = '';
@@ -68,13 +70,34 @@ export async function exportToFile(
   filePath: string,
   options: ExportOptions
 ): Promise<ExportSummary> {
+  const target = resolve(filePath);
+  const previous = pendingExports.get(target) ?? Promise.resolve();
+  let release!: () => void;
+  const completed = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  pendingExports.set(target, completed);
+  try {
+    await previous;
+    return await writeExportFile(store, filePath, options);
+  } finally {
+    release();
+    if (pendingExports.get(target) === completed) pendingExports.delete(target);
+  }
+}
+
+async function writeExportFile(
+  store: MemoryStore,
+  filePath: string,
+  options: ExportOptions
+): Promise<ExportSummary> {
   const entries = sortedEntries(store);
   const edges = sortedEdges(store);
   const feedback = sortedFeedback(store);
   const header = buildHeader(entries, edges, feedback, options);
 
   await mkdir(dirname(filePath), { recursive: true });
-  const tempPath = `${filePath}.${process.pid}.tmp`;
+  const tempPath = `${filePath}.${randomUUID()}.tmp`;
 
   let bytes = 0;
   const lines = function* (): Generator<string> {
@@ -85,7 +108,10 @@ export async function exportToFile(
   };
 
   try {
-    await pipeline(Readable.from(lines()), createWriteStream(tempPath, { encoding: 'utf8' }));
+    await pipeline(
+      Readable.from(lines()),
+      createWriteStream(tempPath, { encoding: 'utf8', flags: 'wx', mode: 0o600 })
+    );
     await rename(tempPath, filePath);
   } catch (error) {
     await rm(tempPath, { force: true });
